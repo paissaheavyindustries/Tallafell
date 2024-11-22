@@ -1,11 +1,8 @@
-﻿using Dalamud.Game;
-using Dalamud.IoC;
-using Dalamud.Plugin;
+﻿using Dalamud.Plugin;
 using Dalamud.Game.ClientState.Objects.Types;
 using CharacterStruct = FFXIVClientStructs.FFXIV.Client.Game.Character.Character;
 using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
 using System;
-using Dalamud.Plugin.Services;
 
 namespace Tallafell
 {
@@ -15,29 +12,18 @@ namespace Tallafell
 
         public string Name => "Tallafell";
 
-        private DalamudPluginInterface _pi { get; init; }
-        private IObjectTable _ot { get; init; }
-        private IChatGui _cg { get; init; }
-        private IClientState _cs { get; init; }
+        private Service _svc = null;
         private DateTime _nextCheck = DateTime.Now;
 
-        public Plugin(
-            [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
-            [RequiredVersion("1.0")] IObjectTable objectTable,
-            [RequiredVersion("1.0")] IClientState clientState,
-            [RequiredVersion("1.0")] IChatGui chatGui
-        )
+        public Plugin(IDalamudPluginInterface pluginInterface)
         {
-            _pi = pluginInterface;
-            _ot = objectTable;
-            _cg = chatGui;
-            _cs = clientState;
-            _pi.UiBuilder.Draw += DrawUI;
+            _svc = pluginInterface.Create<Service>();
+            _svc.pi.UiBuilder.Draw += DrawUI;
         }
 
         public void Dispose()
         {
-            _pi.UiBuilder.Draw -= DrawUI;
+            _svc.pi.UiBuilder.Draw -= DrawUI;
         }
 
         private void DrawUI()
@@ -51,11 +37,11 @@ namespace Tallafell
 
         private unsafe void Tallafellify()
         {
-            foreach (GameObject go in _ot)
+            foreach (IGameObject go in _svc.ot)
             {
-                if (go is Character)
+                if (go is ICharacter)
                 {
-                    Character bc = (Character)go;
+                    ICharacter bc = (ICharacter)go;
                     if (bc.Customize[0] == 3)
                     {
                         CharacterStruct* bcs = (CharacterStruct*)bc.Address;
